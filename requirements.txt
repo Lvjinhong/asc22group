@@ -1,0 +1,8 @@
+cirq==1.1.0
+cirq_core==1.1.0
+core==1.0.1
+numpy==1.23.5
+opt_einsum==3.3.0
+pytest==7.3.1
+setuptools==66.0.0
+torch==2.0.1+cu118

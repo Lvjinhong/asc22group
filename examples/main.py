@@ -20,14 +20,17 @@ torch.backends.cuda.matmul.allow_tf32 = False
 aT=time.time()
 
 n, m, seq, device, sc_target, seed = 30, 14, 'EFGH', 'cuda', 30, 0
-qc = QuantumCircuit(n, m, seq=seq)
+qc = QuantumCircuit(n, m, seq=seq) #创建量子电路
 edges = []
+#提取量子电路的边，存入edges，并确定收缩顺序和收缩边
 for i in range(len(qc.neighbors)):
     for j in qc.neighbors[i]:
         if i < j:
             edges.append((i, j))
 neighbors = list(qc.neighbors)
+
 final_qubits = set(range(len(neighbors) - n, len(neighbors)))
+
 tensor_bonds = {
     i: [edges.index((min(i, j), max(i, j))) for j in neighbors[i]]
     for i in range(len(neighbors)) if i not in final_qubits
@@ -83,6 +86,7 @@ while len(slicing_edges_manually_select):
     tensor_network.slicing(edges.index(slicing_edge))
     ctree_appro = ContractionTree(deepcopy(tensor_network), order_slicing, 0)
     scheme, _ = contraction_scheme(ctree_appro)
+
     appro_amps = tensor_contraction(
         deepcopy(tensors_slicing), scheme
     ).permute(permute_dims).reshape(-1).cpu()
@@ -90,13 +94,11 @@ while len(slicing_edges_manually_select):
             (full_amps.conj() @ appro_amps.reshape(-1)).abs() /
             (full_amps.abs().square().sum().sqrt() * appro_amps.abs().square().sum().sqrt())
     ).square().item()
-
     print(
         'after slicing {} edges, fidelity now is {:.5f} (estimated value {})'.format(
             len(slicing_indices), fidelity, 1 / 2 ** (len(slicing_indices))
         )
     )
-
 
 def read_samples(filename):
     import os

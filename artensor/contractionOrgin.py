@@ -59,60 +59,6 @@ def contraction_scheme(ctree:ContractionTree):
     return scheme, output_bonds
 
 
-
-def tensor_contraction_stream(tensors, scheme):
-    """
-    perform the tensor contraction
-    """
-    
-    next_scheme = []
-    work_queue = []
-    while len(scheme):
-        used = np.zeros(1000+1, dtype=bool)
-        tmp_queue = []
-        for s in scheme:
-            i, j = s[0]
-            if used[i] == 0 and used[j] == 0:
-                tmp_queue.append(s)
-            else:
-                next_scheme.append(s)
-            used[i] = 1
-            used[j] = 1
-        scheme = next_scheme
-        work_queue.append(tmp_queue)
-        next_scheme = []
-
-    for cur_work in work_queue:
-        num_work = len(cur_work)
-        if num_work == 1:
-            s = cur_work[0]
-            i, j = s[0]
-            einsum_eq = s[1]
-            tensors[i] = torch.einsum(einsum_eq, tensors[i], tensors[j])
-        else:
-            # for idx, s in list(enumerate(cur_work)):
-            #     i, j = s[0]
-            #     einsum_eq = s[1]
-            #     print(einsum_eq, i, j)
-            #     tensors[i] = torch.einsum(einsum_eq, tensors[i], tensors[j])
-            num_stream = min(num_work, 16)
-            streams = []
-            for i in range(num_stream):
-                streams.append(torch.cuda.Stream())
-            num_work_per_stream = int((num_work + num_stream - 1) / num_stream)
-            for idx, stream in enumerate(streams):
-                with torch.cuda.stream(stream):
-                    for idx_fine in range(num_work_per_stream):
-                        ii = idx * num_work_per_stream + idx_fine
-                        if ii < num_work:
-                            i, j = cur_work[ii][0]
-                            einsum_eq = cur_work[ii][1]
-                            tensors[i] = torch.einsum(einsum_eq, tensors[i], tensors[j])
-            torch.cuda.synchronize()
-
-    # print("Total interval is: ", time.time() - st)
-    return tensors[i]
-
 def tensor_contraction(tensors, scheme):
     """
     perform the tensor contraction

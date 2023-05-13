@@ -15,7 +15,7 @@ from .core import (
 
 from .greedy import GreedyOrderFinder
 
-from .contraction import * #(
+from .contractionOrgin import * #(
 #     tensor_contraction, 
 #     contraction_scheme,
 #     tensor_contraction_sparsestate,
